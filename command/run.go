@@ -3,12 +3,13 @@ package command
 import (
 	"errors"
 	"fmt"
-	"github.com/rfyc/frame/utils/object"
 	"os"
 	"os/signal"
 	"reflect"
 	"strings"
 	"syscall"
+
+	"github.com/rfyc/frame/utils/object"
 )
 
 func Run(app ...IRunApp) {
@@ -79,9 +80,10 @@ func runCmd() error {
 			return runAction(execAction.runAction)
 		}
 		if execCmd, ok := regCmd.(*cmd); ok {
-			return runAction(execCmd.findAction(nameAction))
+			if execAction := execCmd.findAction(nameAction); execAction != nil {
+				return runAction(execAction)
+			}
 		}
-
 	}
 	return errNoCmd
 }

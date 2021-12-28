@@ -20,10 +20,9 @@ type cmd struct {
 	desc    string
 }
 
-func (this *cmd) findAction(name string) *action {
-	act := this.actions[strings.ToLower(name)]
-	if execAction, ok := act.(*action); ok {
-		return execAction
+func (this *cmd) findAction(name string) IRunAction {
+	if act := this.actions[strings.ToLower(name)]; act != nil {
+		return act.runAction
 	}
 	return nil
 }
