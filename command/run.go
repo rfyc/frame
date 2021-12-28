@@ -1,7 +1,6 @@
 package command
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -62,19 +61,6 @@ func run() error {
 		}
 	}
 
-	if err := runCmd(); !errors.Is(err, errNoCmd) {
-		return err
-	}
-
-	if err := runApp(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func runCmd() error {
-	//从commands中找cmd执行
 	if regCmd := commands[strings.ToLower(nameCmd)]; regCmd != nil {
 		if execAction, ok := regCmd.(*action); ok {
 			return runAction(execAction.runAction)
@@ -85,7 +71,8 @@ func runCmd() error {
 			}
 		}
 	}
-	return errNoCmd
+
+	return runApp()
 }
 
 func runAction(execAction IRunAction) error {
@@ -113,7 +100,7 @@ func runAction(execAction IRunAction) error {
 func runApp() error {
 
 	//从app中找函数执行
-	if method := object.FindMethod(execApp, cmdname); method != "" {
+	if method := object.FindMethod(execApp, nameCmd); method != "" {
 		wait := make(chan bool, 1)
 		go func() {
 			run := reflect.ValueOf(execApp).MethodByName(method)
