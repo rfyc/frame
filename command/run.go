@@ -3,7 +3,7 @@ package command
 import (
 	"errors"
 	"fmt"
-	"github.com/rfyc/frame/frame/func/object"
+	"github.com/rfyc/frame/utils/object"
 	"os"
 	"os/signal"
 	"reflect"
@@ -74,29 +74,38 @@ func run() error {
 
 func runCmd() error {
 	//从commands中找cmd执行
-	if cmd := commands[strings.ToLower(cmdname)]; cmd != nil {
-		if execCmd, ok := cmd.(IRunCmd); ok {
-			execCmd.Construct()
-			if err := object.Set(execCmd, os.Args); err != nil {
-				return fmt.Errorf("cmd set Args error: %w", err)
-			}
-			if err := execCmd.Init(); err != nil {
-				return fmt.Errorf("cmd Init error: %w", err)
-			}
-			wait := make(chan bool, 1)
-			go func() {
-				execCmd.Run()
-				execCmd.Destruct()
-				wait <- true
-			}()
-			select {
-			case <-ctx.Done():
-			case <-wait:
-			}
-			return nil
+	if regCmd := commands[strings.ToLower(nameCmd)]; regCmd != nil {
+		if execAction, ok := regCmd.(*action); ok {
+			return runAction(execAction.runAction)
 		}
+		if execCmd, ok := regCmd.(*cmd); ok {
+			return runAction(execCmd.findAction(nameAction))
+		}
+
 	}
 	return errNoCmd
+}
+
+func runAction(execAction IRunAction) error {
+
+	execAction.Construct()
+	if err := object.Set(execAction, os.Args); err != nil {
+		return fmt.Errorf("cmd set Args error: %w", err)
+	}
+	if err := execAction.Init(); err != nil {
+		return fmt.Errorf("cmd Init error: %w", err)
+	}
+	wait := make(chan bool, 1)
+	go func() {
+		execAction.Run()
+		execAction.Destruct()
+		wait <- true
+	}()
+	select {
+	case <-ctx.Done():
+	case <-wait:
+	}
+	return nil
 }
 
 func runApp() error {

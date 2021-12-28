@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	cmdname     = "start"
+	nameCmd     = "start"
+	nameAction  = ""
 	args        = parseArgs(os.Args)
 	done        = make(chan bool, 1)
 	stopSig     = make(chan os.Signal, 1)
@@ -22,7 +23,10 @@ var (
 
 func init() {
 	if len(os.Args) > 1 {
-		cmdname = strings.ToLower(os.Args[1])
+		nameCmd = strings.ToLower(os.Args[1])
+	}
+	if len(os.Args) > 2 {
+		nameAction = strings.ToLower(os.Args[2])
 	}
 }
 

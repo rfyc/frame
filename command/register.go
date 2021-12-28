@@ -1,5 +1,7 @@
 package command
 
+import "strings"
+
 var (
 	execApp  IRunApp
 	commands = map[string]cmdOrAction{}
@@ -7,15 +9,23 @@ var (
 
 type cmdOrAction interface{}
 
+type action struct {
+	runAction IRunAction
+	desc      string
+}
+
 type cmd struct {
 	runCmd  IRunCmd
 	actions map[string]*action
 	desc    string
 }
 
-type action struct {
-	runAction IRunAction
-	desc      string
+func (this *cmd) findAction(name string) *action {
+	act := this.actions[strings.ToLower(name)]
+	if execAction, ok := act.(*action); ok {
+		return execAction
+	}
+	return nil
 }
 
 func registerApp(app ...IRunApp) {
