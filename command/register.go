@@ -27,12 +27,6 @@ func (this *cmd) findAction(name string) IRunAction {
 	return nil
 }
 
-func registerApp(app ...IRunApp) {
-	if len(app) > 0 {
-		execApp = app[0]
-	}
-}
-
 func RegisterAction(cmdName string, runAction IRunAction, desc ...string) {
 
 	act := &action{runAction: runAction}

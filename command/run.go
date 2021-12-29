@@ -11,7 +11,11 @@ import (
 	"github.com/rfyc/frame/utils/object"
 )
 
-func Run(app ...IRunApp) {
+func Run() {
+	RunApp(nil)
+}
+
+func RunApp(app IRunApp) {
 
 	//信号量绑定
 	signal.Notify(stopSig, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
@@ -29,7 +33,10 @@ func Run(app ...IRunApp) {
 
 	//执行cmd
 	go func() {
-		registerApp(app...)
+		defer func() {
+			done <- true
+		}()
+		execApp = app
 		run()
 	}()
 
@@ -100,18 +107,20 @@ func runAction(execAction IRunAction) error {
 func runApp() error {
 
 	//从app中找函数执行
-	if method := object.FindMethod(execApp, nameCmd); method != "" {
-		wait := make(chan bool, 1)
-		go func() {
-			run := reflect.ValueOf(execApp).MethodByName(method)
-			run.Call([]reflect.Value{})
-			wait <- true
-		}()
-		select {
-		case <-ctx.Done():
-		case <-wait:
+	if execApp != nil {
+		if method := object.FindMethod(execApp, nameCmd); method != "" {
+			wait := make(chan bool, 1)
+			go func() {
+				run := reflect.ValueOf(execApp).MethodByName(method)
+				run.Call([]reflect.Value{})
+				wait <- true
+			}()
+			select {
+			case <-ctx.Done():
+			case <-wait:
+			}
+			return nil
 		}
-		return nil
 	}
 	return errNoCmd
 }

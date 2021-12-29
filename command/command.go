@@ -41,7 +41,8 @@ type IRunApp interface {
 type IRunCmd interface {
 	Construct()
 	Init() error
-	Run() error
+	Run(IRunAction) error
+	Stop() error
 	Destruct()
 }
 
@@ -49,6 +50,7 @@ type IRunAction interface {
 	Construct()
 	Init() error
 	Run() error
+	Stop() error
 	Destruct()
 }
 
