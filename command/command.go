@@ -2,56 +2,109 @@ package command
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/rfyc/frame/utils/conv"
 	"os"
+	"os/signal"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
+
+	"github.com/rfyc/frame/utils/conv"
+	"github.com/rfyc/frame/utils/object"
 )
 
 var (
-	nameCmd     = "start"
-	nameAction  = ""
-	args        = parseArgs(os.Args)
 	done        = make(chan bool, 1)
 	stopSig     = make(chan os.Signal, 1)
 	ctx, cancel = context.WithCancel(context.Background())
-	errNoCmd    = errors.New("no cmd")
 )
 
-func init() {
-	if len(os.Args) > 1 {
-		nameCmd = strings.ToLower(os.Args[1])
+func RunApp(app IRunApp) {
+	execApp = app
+	Run()
+}
+
+func Run() {
+
+	//信号量绑定
+	signal.Notify(stopSig, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
+
+	//捕获异常
+	defer func() {
+		if p := recover(); p != nil {
+			echo("main", "recover")
+			catch(p)
+			echo("catch", p)
+			cancel()
+			echo("main", "wait")
+		}
+	}()
+
+	//执行cmd
+	go func() {
+		defer func() {
+			done <- true
+		}()
+		run()
+	}()
+
+	//信号捕获
+	for {
+		select {
+		case <-stopSig:
+			echo("main", "stop")
+			cancel()
+			echo("main", "wait")
+		case <-done:
+			echo("main", "done")
+			return
+
+		}
 	}
-	if len(os.Args) > 2 {
-		nameAction = strings.ToLower(os.Args[2])
+}
+
+func initApp() error {
+
+	if execApp != nil {
+		execApp.Construct()
+		defer execApp.Destruct()
+		if err := object.Set(execApp, os.Args); err != nil {
+			return err
+		}
+		if err := execApp.Init(); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-type IRunApp interface {
-	Construct()
-	Init() error
-	Start() error
-	Stop() error
-	Destruct()
+func run() {
+
+	if err := initApp(); err != nil {
+		return
+	}
+
+	execCmd := findCmd()
+	if execCmd == nil {
+		cmdHelper()
+		return
+	}
+	execAction := findAction()
+	if execAction == nil {
+		actionHelper()
+		return
+	}
+
+	return
 }
 
-type IRunCmd interface {
-	Construct()
-	Init() error
-	Run(IRunAction) error
-	Stop() error
-	Destruct()
+func cmdHelper() {
+
 }
 
-type IRunAction interface {
-	Construct()
-	Init() error
-	Run() error
-	Stop() error
-	Destruct()
+func actionHelper() {
+
 }
 
 func catch(p interface{}) {
