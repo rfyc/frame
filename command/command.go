@@ -2,33 +2,67 @@ package command
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
-	"strings"
 	"syscall"
-	"time"
-
-	"github.com/rfyc/frame/utils/conv"
-	"github.com/rfyc/frame/utils/object"
 )
 
-var (
-	done        = make(chan bool, 1)
-	stopSig     = make(chan os.Signal, 1)
-	ctx, cancel = context.WithCancel(context.Background())
-)
-
-func RunApp(app IRunApp) {
-	execApp = app
-	Run()
+type IAction interface {
+	Construct()
+	Init() error
+	Run() error
+	Stop() error
+	Destruct()
 }
 
-func Run() {
+type IArgs interface {
+	Construct()
+	Init() error
+	Run() error
+	Destruct()
+}
+
+type Command struct {
+	done     chan bool
+	signal   chan os.Signal
+	ctx      context.Context
+	cancel   context.CancelFunc
+	args     []IArgs
+	actions  map[string]map[string]IAction
+	commands map[string]func()
+}
+
+func (this *Command) RegisterArgs(runArgs IArgs) *Command {
+
+	return this
+}
+
+func (this *Command) RegisterCmd(cmd string, runCmd func()) *Command {
+
+	if this.commands == nil {
+		this.commands = make(map[string]func())
+	}
+
+	return this
+}
+
+func (this *Command) RegisterAction(cmd, action string, runAction IAction) *Command {
+
+	if this.actions == nil {
+		this.actions = make(map[string]map[string]IAction)
+	}
+
+	return this
+}
+
+func (this *Command) Run() {
+
+	this.done = make(chan bool, 1)
+	this.signal = make(chan os.Signal, 1)
+	this.ctx, this.cancel = context.WithCancel(context.Background())
 
 	//信号量绑定
-	signal.Notify(stopSig, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
+	signal.Notify(this.signal, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
 
 	//捕获异常
 	defer func() {
@@ -36,7 +70,7 @@ func Run() {
 			echo("main", "recover")
 			catch(p)
 			echo("catch", p)
-			cancel()
+			this.cancel()
 			echo("main", "wait")
 		}
 	}()
@@ -44,95 +78,25 @@ func Run() {
 	//执行cmd
 	go func() {
 		defer func() {
-			done <- true
+			this.done <- true
 		}()
-		run()
+		this.run()
 	}()
 
 	//信号捕获
 	for {
 		select {
-		case <-stopSig:
+		case <-this.signal:
 			echo("main", "stop")
-			cancel()
+			this.cancel()
 			echo("main", "wait")
-		case <-done:
+		case <-this.done:
 			echo("main", "done")
 			return
-
 		}
 	}
 }
 
-func initApp() error {
+func (this *Command) run() {
 
-	if execApp != nil {
-		execApp.Construct()
-		defer execApp.Destruct()
-		if err := object.Set(execApp, os.Args); err != nil {
-			return err
-		}
-		if err := execApp.Init(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func run() {
-
-	if err := initApp(); err != nil {
-		return
-	}
-
-	execCmd := findCmd()
-	if execCmd == nil {
-		cmdHelper()
-		return
-	}
-	execAction := findAction()
-	if execAction == nil {
-		actionHelper()
-		return
-	}
-
-	return
-}
-
-func cmdHelper() {
-
-}
-
-func actionHelper() {
-
-}
-
-func catch(p interface{}) {
-	buf := make([]byte, 64<<10)
-	buf = buf[:runtime.Stack(buf, false)]
-	log := time.Now().Format("2006-01-02 15:04:05.000") + " -- " + "cmd panic:" + conv.String(p)
-	log += " -- stack:" + string(buf)
-	echo("catch", log)
-}
-
-func echo(cmd string, action interface{}) {
-	now := time.Now().Format("2006-01-02 15:04:05")
-	fmt.Println(now, fmt.Sprintf(" %-10s", cmd), action)
-}
-
-func parseArgs(args []string) map[string]string {
-
-	maps := make(map[string]string)
-	for _, value := range args {
-		if strings.HasPrefix(value, "--") {
-			params := strings.Split(value[2:], "=")
-			count := len(params)
-			if count > 1 {
-				maps[params[0]] = params[1]
-			} else if count == 1 {
-				maps[params[0]] = "true"
-			}
-		}
-	}
-	return maps
 }
