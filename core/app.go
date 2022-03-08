@@ -1,11 +1,5 @@
 package core
 
-type IApp interface {
-	Prepare() error
-	Start() error
-	Stop() error
-}
-
 type App struct {
 }
 
