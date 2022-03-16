@@ -1,7 +1,7 @@
 package command
 
 type iArgs interface {
-	Prepare(app iApp) error
+	Prepare(app interface{}) error
 }
 
 type args struct {

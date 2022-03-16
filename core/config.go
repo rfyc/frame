@@ -6,7 +6,7 @@ type config struct {
 	Config string
 }
 
-func (this *config) Prepare(app iApp) error {
+func (this *config) Prepare(app interface{}) error {
 	return nil
 }
 

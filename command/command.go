@@ -18,7 +18,7 @@ type iApp interface {
 	Restart() error
 }
 
-type command struct {
+type Command struct {
 	input  *input
 	action *action
 	cmd    *cmd
@@ -30,17 +30,18 @@ type command struct {
 	cancel context.CancelFunc
 }
 
-func (this *command) Init() {
+func (this *Command) Init() {
 	this.input = &input{}
 	this.action = (&action{}).init()
 	this.cmd = (&cmd{}).init()
 	this.args = (&args{}).init()
+	this.stdio = &stdio{}
 	this.done = make(chan bool, 1)
 	this.signal = make(chan os.Signal, 1)
 	this.ctx, this.cancel = context.WithCancel(context.Background())
 }
 
-func (this *command) Run(app iApp) {
+func (this *Command) Run(app iApp) {
 
 	//信号量绑定
 	signal.Notify(this.signal, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
@@ -79,7 +80,7 @@ func (this *command) Run(app iApp) {
 
 }
 
-func (this *command) run(app iApp) {
+func (this *Command) run(app iApp) {
 
 	//init input
 	if err := this.input.json(); err != nil {
@@ -118,7 +119,7 @@ func (this *command) run(app iApp) {
 	//parse action
 	if name, action := this.action.parse(); action != nil {
 		//prepare
-		this.stdio.format("action", name).format("parse", "ok").echo()
+		this.stdio.format("action", name).format("parse").echo()
 		if err := action.Prepare(); err != nil {
 			this.stdio.format("action", name).format("prepare").format("error", err.Error()).echo()
 			return
@@ -128,29 +129,29 @@ func (this *command) run(app iApp) {
 		action.Run()
 		this.stdio.format("action", name).format("runned").echo()
 		action.End()
-		this.stdio.format("action", name).format("end").echo()
+		this.stdio.format("action", name).format("over").echo()
 		return
 	}
 	//not found
 	this.stdio.format("cmd").format("error", "not found").echo()
 }
 
-func (this *command) RegisterArgs(name string, args iArgs, desc ...string) *command {
+func (this *Command) RegisterArgs(name string, args iArgs, desc ...string) *Command {
 	this.args.register(name, args, desc...)
 	return this
 }
 
-func (this *command) RegisterCmd(name string, runCmd func() error, desc ...string) *command {
+func (this *Command) RegisterCmd(name string, runCmd func() error, desc ...string) *Command {
 	this.cmd.register(name, runCmd, desc...)
 	return this
 }
 
-func (this *command) RegisterAction(name string, action iAction, desc ...string) *command {
+func (this *Command) RegisterAction(name string, action iAction, desc ...string) *Command {
 	this.action.register(name, action, desc...)
 	return this
 }
 
-func (this *command) catch(p interface{}) {
+func (this *Command) catch(p interface{}) {
 	buf := make([]byte, 64<<10)
 	buf = buf[:runtime.Stack(buf, false)]
 	fmt.Sprintf("%s -- cmd panic: %v  -- stack: %s\n", time.Now().Format("2006-01-02 15:04:05"), p, string(buf))
