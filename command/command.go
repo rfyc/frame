@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -41,7 +40,7 @@ func (this *Command) Init() {
 	this.ctx, this.cancel = context.WithCancel(context.Background())
 }
 
-func (this *Command) Run(app iApp) {
+func (this *Command) Run(servApp iApp) {
 
 	//信号量绑定
 	signal.Notify(this.signal, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
@@ -62,7 +61,7 @@ func (this *Command) Run(app iApp) {
 		defer func() {
 			this.done <- true
 		}()
-		this.run(app)
+		this.run(servApp)
 	}()
 
 	//信号捕获
@@ -80,31 +79,28 @@ func (this *Command) Run(app iApp) {
 
 }
 
-func (this *Command) run(app iApp) {
+func (this *Command) run(servApp iApp) {
 
-	//init input
-	if err := this.input.json(); err != nil {
-		this.stdio.format("input", "json").format("error", err.Error()).echo()
-		return
-	}
 	//service cmds
-	if app != nil {
-		this.RegisterCmd("start", app.Start)
-		this.RegisterCmd("stop", app.Stop)
-		this.RegisterCmd("restart", app.Restart)
+	if servApp != nil {
+		this.RegisterCmd("start", servApp.Start)
+		this.RegisterCmd("stop", servApp.Stop)
+		this.RegisterCmd("restart", servApp.Restart)
 	}
 	//init args
 	for name, Args := range this.args.maps {
 		//bind args
-		if err := json.Unmarshal(this.input.bytes, &Args); err != nil {
-			this.stdio.format("cmd", "args").format("name", name).format("bind").format("error", err.Error()).echo()
+		if err := this.input.bind(Args); err != nil {
+			this.stdio.format("error").format("args", name).format("bind", err.Error()).echo()
 			return
 		}
 		//args prepare
-		if err := Args.Prepare(app); err != nil {
-			this.stdio.format("cmd", "args").format("name", name).format("prepare").format("error", err.Error()).echo()
+		if err := Args.Prepare(servApp); err != nil {
+			this.stdio.format("error").format("args", name).format("prepare", err.Error()).echo()
 			return
 		}
+		//args output
+		this.stdio.format("args").format(name, Args.String()).echo()
 	}
 	//parse cmd
 	if name, cmd := this.cmd.parse(); cmd != nil {
@@ -133,7 +129,7 @@ func (this *Command) run(app iApp) {
 		return
 	}
 	//not found
-	this.stdio.format("cmd").format("error", "not found").echo()
+	this.stdio.format("error").format("cmd not found").echo()
 }
 
 func (this *Command) RegisterArgs(name string, args iArgs, desc ...string) *Command {

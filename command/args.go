@@ -2,6 +2,7 @@ package command
 
 type iArgs interface {
 	Prepare(app interface{}) error
+	String() string
 }
 
 type args struct {

@@ -11,6 +11,16 @@ type input struct {
 	maps  map[string]string
 }
 
+func (this *input) bind(args iArgs) error {
+	if err := this.json(); err != nil {
+		return err
+	}
+	if err := json.Unmarshal(this.bytes, &args); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (this *input) parse() map[string]string {
 
 	this.maps = make(map[string]string)
@@ -25,6 +35,8 @@ func (this *input) parse() map[string]string {
 	return this.maps
 }
 func (this *input) json() (err error) {
-	this.bytes, err = json.Marshal(this.parse())
-	return
+	if len(this.bytes) == 0 {
+		this.bytes, err = json.Marshal(this.parse())
+	}
+	return err
 }
