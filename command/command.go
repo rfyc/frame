@@ -109,7 +109,6 @@ func (this *Command) run(servApp iApp) {
 			this.stdio.format("cmd", name).format("run", "error", err.Error()).echo()
 			return
 		}
-		this.stdio.format("cmd", name).format("over").echo()
 		return
 	}
 	//parse action
@@ -121,11 +120,9 @@ func (this *Command) run(servApp iApp) {
 			return
 		}
 		//run
-		this.stdio.format("action", name).format("running").echo()
+		this.stdio.format("action", name).format("run...").echo()
 		action.Run()
-		this.stdio.format("action", name).format("runned").echo()
 		action.End()
-		this.stdio.format("action", name).format("over").echo()
 		return
 	}
 	//not found
