@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/rfyc/frame/frame/func/conv"
+	"github.com/rfyc/frame/utils/conv"
 )
 
 var DefaultTypes = []string{
