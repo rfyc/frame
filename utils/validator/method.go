@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rfyc/frame/frame/func/object"
+	"github.com/rfyc/frame/utils/object"
 )
 
 type Method struct {

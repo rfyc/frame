@@ -1,7 +1,7 @@
 package validator
 
 import (
-	"github.com/rfyc/frame/frame/func/object"
+	"github.com/rfyc/frame/utils/object"
 )
 
 var (
@@ -30,14 +30,7 @@ type Rule interface {
 	Check(values map[string]interface{}) (errno, errmsg, field string)
 }
 
-func Merge(rules1, rules2 Rules) Rules {
-	for _, rule := range rules2 {
-		rules1 = append(rules1, rule)
-	}
-	return rules1
-}
-
-func Check(validator Interface) (errno, errmsg, field string) {
+func Handle(validator Interface) (errno, errmsg, field string) {
 
 	values := object.Values(validator)
 
