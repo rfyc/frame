@@ -1,46 +1,33 @@
 package validator
 
 import (
+	"fmt"
+	"github.com/rfyc/frame/utils/structs"
 	"strings"
-
-	"github.com/rfyc/frame/utils/conv"
-	"github.com/rfyc/frame/utils/object"
 )
 
 type Required struct {
-	Fields string
-	Errno  string
-	Errmsg string
+	Struct  interface{}
+	Names   string
+	IsEmpty bool
+	Error   error
 }
 
-func (this *Required) GetFields() string {
-	return this.Fields
-}
+func (this *Required) Validate() (bool, error) {
 
-func (this *Required) Check(values map[string]interface{}) (errno, errmsg, field string) {
-
-	if len(this.Fields) != 0 {
-		if this.Errno == "" {
-			this.Errno = errno_required
-		}
-		if this.Errmsg == "" {
-			this.Errmsg = errmsg_required
-		}
-		fieldArr := strings.Split(this.Fields, ",")
-		for key, val := range values {
-			for _, field := range fieldArr {
-				if strings.ToLower(field) == strings.ToLower(key) {
-					if len(conv.String(val)) == 0 {
-						return this.Errno, this.Errmsg, field
-					}
-				}
+	names := strings.Trim(this.Names, ",")
+	refValue := structs.ValueOf(this.Struct)
+	field_names := structs.Fields(this.Struct)
+	for _, name := range strings.Split(strings.ToLower(names), ",") {
+		if field_names[name] != "" {
+			Field := refValue.FieldByName(field_names[name])
+			if v, ok := Field.Interface().(string); ok && v == "" {
+				return false, fmt.Errorf("%w: %s required", this.Error, name)
+			}
+			if this.IsEmpty && Field.IsZero() {
+				return false, fmt.Errorf("%w: %s empty", this.Error, name)
 			}
 		}
 	}
-	return
-}
-
-func (this *Required) CheckObject(obj interface{}) (errno, errmsg, field string) {
-
-	return this.Check(object.Values(obj))
+	return true, nil
 }
