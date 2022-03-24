@@ -1,8 +1,6 @@
 package core
 
-import (
-	"github.com/rfyc/frame/utils/object"
-)
+import "github.com/rfyc/frame/ext/validator"
 
 var Config = &config{}
 
@@ -10,13 +8,22 @@ type config struct {
 	Config string
 }
 
-func (this *config) Rules() {
+func (this *config) Rules() validator.IRules {
 
-	validator.
+	return validator.IRules{
+		&validator.File{
+			Names:  "config",
+			Struct: this,
+		},
+	}
 }
 
 func (this *config) Prepare(app interface{}) error {
-	return object.LoadFile(app, this.Config)
+
+	if this.Config != "" {
+
+	}
+	return nil
 }
 
 func (this *config) String() string {

@@ -1,7 +1,10 @@
 package command
 
+import "github.com/rfyc/frame/ext/validator"
+
 type iArgs interface {
 	Prepare(app interface{}) error
+	Rules() validator.IRules
 	String() string
 }
 
@@ -16,8 +19,8 @@ func (this *args) init() *args {
 	return this
 }
 
-func (this *args) register(name string, args iArgs, desc ...string) {
-	this.maps[name] = args
+func (this *args) register(name string, argv iArgs, desc ...string) {
+	this.maps[name] = argv
 	if len(desc) > 0 {
 		this.desc["args_"+name] = desc[0]
 	}

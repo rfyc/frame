@@ -1,6 +1,7 @@
 package structs
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -84,3 +85,73 @@ func PtrOf(argv interface{}) reflect.Value {
 	}
 	return refValue
 }
+
+func Set(obj interface{}, data interface{}) {
+
+}
+
+func Values(obj interface{}) map[string]interface{} {
+
+	return values(ValueOf(obj))
+}
+
+func values(valueOf reflect.Value) map[string]interface{} {
+
+	maps := make(map[string]interface{})
+
+	switch valueOf.Kind() {
+	case reflect.Map:
+		if valueOf.CanInterface() {
+			if jsonData, err := json.Marshal(valueOf.Interface()); err == nil {
+				fmt.Println("json:", json.Unmarshal(jsonData, &maps))
+			}
+		}
+	case reflect.Struct:
+		for k := 0; k < valueOf.Type().NumField(); k++ {
+			if valueOf.Type().Field(k).Anonymous {
+				vals := values(valueOf.Field(k))
+				for key, val := range vals {
+					maps[key] = val
+				}
+			} else {
+				if valueOf.Type().Field(k).IsExported() && valueOf.Field(k).CanInterface() {
+					maps[strings.ToLower(valueOf.Type().Field(k).Name)] = valueOf.Field(k).Interface()
+				}
+			}
+		}
+	}
+	return maps
+}
+
+//func Load(obj interface{}, file string) error {
+//	data, err := ioutil.ReadFile(file)
+//	if err != nil {
+//		return err
+//	}
+//	dirconfig, _ := filepath.Abs(filepath.Dir(file))
+//	var cmaps = make(map[string]interface{})
+//	var objmaps = Values(obj)
+//	var filemaps = make(map[string]string)
+//	json.Unmarshal(data, &cmaps)
+//	// fmt.Println(cmaps)
+//	for key, val := range cmaps {
+//		conf_file := conv.String(val)
+//		index := strings.Index(conf_file, ".")
+//		key = strings.ToLower(key)
+//		objVal := objmaps[key]
+//		if -1 != index && objVal != nil && reflect.TypeOf(objVal).String() != "string" {
+//			conf_file = dirconfig + "/" + conf_file
+//			if _, err := os.Stat(conf_file); err == nil {
+//				filedata, err := ioutil.ReadFile(conf_file)
+//				if err == nil {
+//					filemaps["\""+conv.String(val)+"\""] = string(filedata)
+//				}
+//			}
+//		}
+//	}
+//	content := string(data)
+//	for k, v := range filemaps {
+//		content = strings.Replace(content, k, v, -1)
+//	}
+//	return json.Unmarshal([]byte(content), obj)
+//}

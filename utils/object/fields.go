@@ -7,7 +7,13 @@ import (
 
 var Fields = &fields{}
 
-type fields struct{}
+type fields struct {
+	Name string
+}
+
+type FieldObj struct {
+	fields
+}
 
 func (this *fields) Names(obj interface{}) map[string]string {
 

@@ -1,16 +1,14 @@
 package validator
 
 import (
-	"fmt"
 	"github.com/rfyc/frame/utils/structs"
 	"strings"
 )
 
 type Required struct {
-	Struct  interface{}
-	Names   string
-	IsEmpty bool
-	Error   error
+	Struct interface{}
+	Names  string
+	Error  error
 }
 
 func (this *Required) Validate() (bool, error) {
@@ -22,10 +20,10 @@ func (this *Required) Validate() (bool, error) {
 		if field_names[name] != "" {
 			Field := refValue.FieldByName(field_names[name])
 			if v, ok := Field.Interface().(string); ok && v == "" {
-				return false, fmt.Errorf("%w: %s required", this.Error, name)
+				return false, errorf(this.Error, "%s not required", name)
 			}
-			if this.IsEmpty && Field.IsZero() {
-				return false, fmt.Errorf("%w: %s empty", this.Error, name)
+			if Field.IsZero() {
+				return false, errorf(this.Error, "%s empty", name)
 			}
 		}
 	}

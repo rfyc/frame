@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"fmt"
+	"github.com/rfyc/frame/ext/validator"
 	"os"
 	"os/signal"
 	"runtime"
@@ -92,6 +93,11 @@ func (this *Command) run(servApp iApp) {
 		//bind args
 		if err := this.input.bind(Args); err != nil {
 			this.stdio.format("error").format("args", name).format("bind", err.Error()).echo()
+			return
+		}
+		//validate rules
+		if ok, err := validator.Validate(Args.Rules()); !ok {
+			this.stdio.format("error").format("args", name, "rules").format(err.Error()).echo()
 			return
 		}
 		//args prepare

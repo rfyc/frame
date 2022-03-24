@@ -31,10 +31,9 @@ func TestRequired(t *testing.T) {
 		Age:  0,
 	}
 	required := Required{
-		Struct:  u,
-		Names:   "name,age",
-		IsEmpty: true,
-		Error:   errors.New("params required"),
+		Struct: u,
+		Names:  "name,age",
+		Error:  errors.New("params required"),
 	}
 	fmt.Println(required.Validate())
 }

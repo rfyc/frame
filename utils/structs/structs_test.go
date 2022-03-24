@@ -18,6 +18,26 @@ func (this *user) Echo() {
 	fmt.Println("Name:", this.Name)
 }
 
+type admin struct {
+	user
+	Role int
+	Oper user
+}
+
+func TestValues(t *testing.T) {
+
+	u := &admin{
+		user: user{Name: "hong"},
+		Role: 1,
+		Oper: user{Name: "op"},
+	}
+	uu := map[string]*admin{
+		"admin": u,
+	}
+	fmt.Println(Values(u))
+	fmt.Println(Values(uu))
+}
+
 func TestFields(t *testing.T) {
 	var (
 		uv     = user{Name: "123"}
