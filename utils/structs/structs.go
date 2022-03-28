@@ -2,7 +2,9 @@ package structs
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	jsoniter "github.com/json-iterator/go"
 	"reflect"
 	"strings"
 )
@@ -86,8 +88,45 @@ func PtrOf(argv interface{}) reflect.Value {
 	return refValue
 }
 
-func Set(obj interface{}, data interface{}) {
+func Set(dst interface{}, src interface{}) error {
 
+	if !IsPtr(dst) {
+		return errors.New("dst error: not ptr")
+	}
+	value := ValueOf(src)
+	if !value.IsValid() || !value.CanInterface() {
+		return errors.New("src error: invalid")
+	}
+	// []byte string
+	switch v := value.Interface().(type) {
+	case []byte:
+		if len(v) == 0 {
+			return errors.New("src error: empty")
+		}
+		if err := jsoniter.Unmarshal(v, dst); err != nil {
+			return fmt.Errorf("src error: json parse: %w", err)
+		}
+	case string:
+		if len(v) == 0 {
+			return errors.New("src error: empty")
+		}
+		if err := jsoniter.Unmarshal([]byte(v), dst); err != nil {
+			return fmt.Errorf("src error: json parse: %w", err)
+		}
+	default: //map struct
+		switch value.Kind() {
+		case reflect.Map, reflect.Struct:
+			if jbytes, err := jsoniter.Marshal(value.Interface()); err != nil {
+				return fmt.Errorf("src error: json fail: %w", err)
+			} else if err := jsoniter.Unmarshal(jbytes, dst); err != nil {
+				return fmt.Errorf("src error: json parse: %w", err)
+			}
+		default:
+			return errors.New("src error: type invalid")
+		}
+	}
+
+	return nil
 }
 
 func Values(obj interface{}) map[string]interface{} {
@@ -100,12 +139,14 @@ func values(valueOf reflect.Value) map[string]interface{} {
 	maps := make(map[string]interface{})
 
 	switch valueOf.Kind() {
+
 	case reflect.Map:
 		if valueOf.CanInterface() {
 			if jsonData, err := json.Marshal(valueOf.Interface()); err == nil {
 				fmt.Println("json:", json.Unmarshal(jsonData, &maps))
 			}
 		}
+
 	case reflect.Struct:
 		for k := 0; k < valueOf.Type().NumField(); k++ {
 			if valueOf.Type().Field(k).Anonymous {
@@ -122,36 +163,3 @@ func values(valueOf reflect.Value) map[string]interface{} {
 	}
 	return maps
 }
-
-//func Load(obj interface{}, file string) error {
-//	data, err := ioutil.ReadFile(file)
-//	if err != nil {
-//		return err
-//	}
-//	dirconfig, _ := filepath.Abs(filepath.Dir(file))
-//	var cmaps = make(map[string]interface{})
-//	var objmaps = Values(obj)
-//	var filemaps = make(map[string]string)
-//	json.Unmarshal(data, &cmaps)
-//	// fmt.Println(cmaps)
-//	for key, val := range cmaps {
-//		conf_file := conv.String(val)
-//		index := strings.Index(conf_file, ".")
-//		key = strings.ToLower(key)
-//		objVal := objmaps[key]
-//		if -1 != index && objVal != nil && reflect.TypeOf(objVal).String() != "string" {
-//			conf_file = dirconfig + "/" + conf_file
-//			if _, err := os.Stat(conf_file); err == nil {
-//				filedata, err := ioutil.ReadFile(conf_file)
-//				if err == nil {
-//					filemaps["\""+conv.String(val)+"\""] = string(filedata)
-//				}
-//			}
-//		}
-//	}
-//	content := string(data)
-//	for k, v := range filemaps {
-//		content = strings.Replace(content, k, v, -1)
-//	}
-//	return json.Unmarshal([]byte(content), obj)
-//}

@@ -3,6 +3,7 @@ package core
 import "fmt"
 
 type App struct {
+	HTTP string
 }
 
 func (this *App) Prepare() error {

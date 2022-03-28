@@ -24,6 +24,37 @@ type admin struct {
 	Oper user
 }
 
+func TestSet(t *testing.T) {
+
+	var dst = user{}
+	fmt.Println(`> {}              :`, Set(dst, "{}"))
+	fmt.Println(`> []byte{}        :`, Set(&dst, []byte{}))
+	fmt.Println(`> ""              :`, Set(&dst, []byte("")))
+	fmt.Println(`> 111             :`, Set(&dst, 111))
+	fmt.Println(`> "222"           :`, Set(&dst, "222"))
+	fmt.Println(`> {}              :`, Set(&dst, "{}"), " --  dst:", dst)
+	fmt.Println(`> user{}          :`, Set(&dst, user{Name: "hw"}), " --  dst:", dst)
+	fmt.Println(`> *user{}         :`, Set(&dst, &user{Name: "mh"}), " --  dst:", dst)
+	fmt.Println(`> {"name":"hong"} :`, Set(&dst, `{"name":"hong"}`), " --  dst:", dst)
+	var dstStr = ""
+	fmt.Println(`> {}              :`, Set(&dstStr, "{}"))
+
+	var dstMap = map[string]string{}
+	fmt.Println(`> {}              :`, Set(&dstMap, "{}"))
+	fmt.Println(`> {"name":"hong"} :`, Set(&dstMap, `{"name":"hong"}`), " --  dst:", dstMap)
+
+	var dstMapInt = map[string]int{}
+	fmt.Println(`> {} > map        :`, Set(dstMapInt, "{}"))
+	fmt.Println(`> {} > &map       :`, Set(&dstMapInt, "{}"))
+	fmt.Println(`> {"name":"hong"} :`, Set(&dstMapInt, `{"name":"hong"}`))
+
+	var dstMapIntf = map[string]interface{}{}
+	fmt.Println(`> {} > map        :`, Set(dstMapIntf, "{}"))
+	fmt.Println(`> {} > &map       :`, Set(&dstMapIntf, "{}"))
+	fmt.Println(`> {"name":"hong"} :`, Set(&dstMapIntf, `{"name":"hong"}`), " --  dst:", dstMapIntf)
+
+}
+
 func TestValues(t *testing.T) {
 
 	u := &admin{

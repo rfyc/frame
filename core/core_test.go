@@ -7,6 +7,6 @@ import (
 
 func TestCmd(t *testing.T) {
 
-	os.Args = []string{"frame", "start", "--config=app.conf"}
+	os.Args = []string{"frame", "start", "--config=app.json"}
 	Command.Run(&App{})
 }

@@ -1,11 +1,13 @@
 package validator
 
-type Method func() error
+type Method struct {
+	Func func() error
+}
 
 func (this *Method) Validate() (bool, error) {
 
 	if this != nil {
-		if err := (*this)(); err != nil {
+		if err := this.Func(); err != nil {
 			return false, err
 		}
 
