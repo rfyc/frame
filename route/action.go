@@ -1,10 +1,10 @@
 package route
 
-import "github.com/rfyc/frame/ctx"
+import "context"
 
 type IAction interface {
 	Init()
-	Ctx() *ctx.Ctx
+	Ctx(ctx ...context.Context) context.Context
 	Prepare() error
 	Run() (error, interface{})
 	End()
