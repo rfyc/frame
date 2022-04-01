@@ -4,12 +4,19 @@ import (
 	"strings"
 )
 
+type IRoute interface {
+	Parse(path string) (IController, IAction)
+	Default(IController)
+	RegisterController(name string, exec IController)
+	RegisterAction(controller, action string, exec IAction)
+}
+
 type router struct {
 	actions     map[string]IAction
 	controllers map[string]IController
 }
 
-func (this *router) parse(path string) (execController IController, execAction IAction) {
+func (this *router) Parse(path string) (execController IController, execAction IAction) {
 
 	var (
 		action     = ""

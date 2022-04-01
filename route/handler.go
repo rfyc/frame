@@ -2,32 +2,35 @@ package route
 
 import (
 	"net/http"
-	"time"
 )
 
 type Handler struct {
-	router
-	*handlerTCP
-	*handlerHTTP
+	IRoute
+	IHttpHandler
 }
 
 func (this *Handler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 
 	//******** found exec ********//
-	execController, execAction := this.parse(request.URL.Path)
+	execController, execAction := this.Parse(request.URL.Path)
 	if execController == nil || execAction == nil {
 		response.Write([]byte(request.URL.Path + " not found"))
 		return
 	}
-	this.handlerHTTP = &handlerHTTP{
-		request:        request,
-		response:       response,
-		btime:          time.Now(),
-		execController: execController,
-		execAction:     execAction,
-	}
+	this.IHttpHandler.Init(request, response)
+	*execController.Input() = *this.IHttpHandler.Input()
+	execController.Ctx(request.Context())
+	execAction.Ctx(request.Context())
+	code, content := execController.RunAction(execAction.Run)
+	response.WriteHeader(code)
+	response.Header()
+	response.Write(content)
 }
 
 func (this *Handler) ServeTCP() {
+
+}
+
+func ServeHTTP() {
 
 }
