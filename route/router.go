@@ -1,57 +1,30 @@
 package route
 
 import (
-	"strings"
+	"net/http"
 )
 
-type IRoute interface {
-	Parse(path string) (IController, IAction)
-	Default(IController)
-	RegisterController(name string, exec IController)
-	RegisterAction(controller, action string, exec IAction)
+type Router struct {
+	URI  URIHandler
+	HTTP HTTPHandler
 }
 
-type router struct {
-	actions     map[string]IAction
-	controllers map[string]IController
-}
+func (this *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 
-func (this *router) Parse(path string) (execController IController, execAction IAction) {
-
-	var (
-		action     = ""
-		controller = ""
-		paths      = strings.Split(strings.Trim(path, "/"), "/")
-		path_len   = len(paths)
-	)
-
-	//******** name ********//
-	switch {
-	case path_len == 1:
-		controller = "/" + paths[0]
-		action = "index"
-	case path_len > 1:
-		controller = "/" + strings.Join(paths[0:path_len-1], "/")
-		action = paths[path_len-1]
+	//******** found exec ********//
+	execController, execAction := this.URI.Parse(request.URL.Path)
+	if execController == nil || execAction == nil {
+		response.Write([]byte(request.URL.Path + " not found"))
+		return
 	}
-	//******** found controller ********//
-	execController = this.controllers[strings.ToLower(controller)]
-	//******** found action ********//
-	execAction = this.actions[strings.ToLower(action)]
-
-	return
+	handler := this.HTTP.New(request, response)
+	*execController.In() = *handler.In()
+	execController.Ctx(request.Context())
+	execAction.Ctx(request.Context())
+	execController.RunAction(execAction.Run)
+	handler.Out(execController.Out())
 }
 
-func (this *router) RegisterController(name string, controller IController) {
-	if len(this.controllers) == 0 {
-		this.controllers = map[string]IController{}
-	}
-	this.controllers[name] = controller
-}
+func (this *Router) ServeTCP() {
 
-func (this *router) RegisterAction(controller_name, action_name string, action IAction) {
-	if len(this.actions) == 0 {
-		this.actions = map[string]IAction{}
-	}
-	this.actions[controller_name+"::"+action_name] = action
 }
