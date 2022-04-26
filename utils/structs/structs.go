@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"git.joyme.sg/liveme/myth/group/libs/conv"
 	jsoniter "github.com/json-iterator/go"
 	"reflect"
 	"strings"
@@ -116,7 +117,15 @@ func Set(dst interface{}, src interface{}) error {
 	default: //map struct
 		switch value.Kind() {
 		case reflect.Map, reflect.Struct:
-			if jbytes, err := jsoniter.Marshal(value.Interface()); err != nil {
+			dstVals := Values(dst)
+			srcVals := Values(src)
+			for key, val := range srcVals {
+				if v, ok := dstVals[strings.ToLower(key)]; ok {
+					objType := reflect.Indirect(reflect.ValueOf(v)).Kind().String()
+					srcVals[strings.ToLower(key)] = conv.Format(val, objType)
+				}
+			}
+			if jbytes, err := jsoniter.Marshal(srcVals); err != nil {
 				return fmt.Errorf("src error: json fail: %w", err)
 			} else if err := jsoniter.Unmarshal(jbytes, dst); err != nil {
 				return fmt.Errorf("src error: json parse: %w", err)
@@ -143,7 +152,7 @@ func values(valueOf reflect.Value) map[string]interface{} {
 	case reflect.Map:
 		if valueOf.CanInterface() {
 			if jsonData, err := json.Marshal(valueOf.Interface()); err == nil {
-				fmt.Println("json:", json.Unmarshal(jsonData, &maps))
+				json.Unmarshal(jsonData, &maps)
 			}
 		}
 
@@ -155,11 +164,16 @@ func values(valueOf reflect.Value) map[string]interface{} {
 					maps[key] = val
 				}
 			} else {
-				if valueOf.Type().Field(k).IsExported() && valueOf.Field(k).CanInterface() {
+				if valueOf.Type().Field(k).PkgPath == "" && valueOf.Field(k).CanInterface() {
 					maps[strings.ToLower(valueOf.Type().Field(k).Name)] = valueOf.Field(k).Interface()
 				}
 			}
 		}
 	}
 	return maps
+}
+
+func New(obj interface{}) interface{} {
+	typeOf := reflect.Indirect(reflect.ValueOf(obj)).Type()
+	return reflect.New(typeOf).Interface()
 }

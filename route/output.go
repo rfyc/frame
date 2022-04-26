@@ -3,8 +3,8 @@ package route
 import "net/http"
 
 type Output struct {
-	Status  string
-	Error   string
+	Code    string
+	Error   error
 	Content []byte
 	Cookies []*http.Cookie
 	Headers map[string]string

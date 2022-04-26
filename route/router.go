@@ -21,7 +21,7 @@ func (this *Router) ServeHTTP(response http.ResponseWriter, request *http.Reques
 	*execController.In() = *handler.In()
 	execController.Ctx(request.Context())
 	execAction.Ctx(request.Context())
-	execController.RunAction(execAction.Run)
+	execController.Run(execAction)
 	handler.Out(execController.Out())
 }
 

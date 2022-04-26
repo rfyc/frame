@@ -6,8 +6,7 @@ type IController interface {
 	Init()
 	Ctx(ctx ...context.Context) context.Context
 	Prepare() error
-	Run(action IAction) (int, []byte)
+	Run(IAction)
 	In() *Input
 	Out() *Output
-	End()
 }
