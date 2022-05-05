@@ -3,7 +3,7 @@ package element
 import (
 	"html/template"
 
-	"github.com/rfyc/frame/frame/func/conv"
+	"github.com/rfyc/frame/utils/conv"
 )
 
 func Checkbox(input_name string, input_desc string, items map[string]string, input_tip ...string) Interface {

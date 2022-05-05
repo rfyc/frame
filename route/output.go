@@ -3,7 +3,7 @@ package route
 import "net/http"
 
 type Output struct {
-	Code    string
+	Code    int
 	Error   error
 	Content []byte
 	Cookies []*http.Cookie

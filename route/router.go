@@ -5,24 +5,39 @@ import (
 )
 
 type Router struct {
-	URI  URIHandler
-	HTTP HTTPHandler
+	Regsiter RegistHandler
+	HTTP     HTTPHandler
 }
 
 func (this *Router) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 
-	//******** found exec ********//
-	execController, execAction := this.URI.Parse(request.URL.Path)
+	//find exec
+	execController, execAction := this.Regsiter.Parse(request.URL.Path)
 	if execController == nil || execAction == nil {
-		response.Write([]byte(request.URL.Path + " not found"))
+		response.WriteHeader(http.StatusNotFound)
+		response.Write([]byte("not_found"))
 		return
 	}
+
+	//nit exec
+	execAction.Init(request.Context())
 	handler := this.HTTP.New(request, response)
-	*execController.In() = *handler.In()
-	execController.Ctx(request.Context())
-	execAction.Ctx(request.Context())
-	execController.Run(execAction)
-	handler.Out(execController.Out())
+	execController.Init(request.Context(), handler.In(), execAction)
+
+	//check exec
+	if err := execController.Prepare(); err != nil {
+		handler.Out(execController.Out(err, nil))
+		return
+	}
+
+	//check exec
+	if err := execAction.Prepare(); err != nil {
+		handler.Out(execController.Out(err, nil))
+		return
+	}
+
+	//run exec
+	handler.Out(execController.Out(execAction.Run()))
 }
 
 func (this *Router) ServeTCP() {

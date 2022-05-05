@@ -1,18 +1,26 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/rfyc/frame/connect"
+)
 
 type App struct {
-	HTTP string
+	HTTP connect.HTTPServer
+}
+
+func (this *App) Init() {
+	this.HTTP.Init()
 }
 
 func (this *App) Prepare() error {
-	fmt.Println("app prepare")
 	return nil
 }
-
 func (this *App) Start() error {
-	fmt.Println("app start")
+
+	fmt.Printf("http: %+v\n", this.HTTP)
+	this.HTTP.Handle("/", Router)
+	fmt.Println(this.HTTP.Start())
 	return nil
 }
 

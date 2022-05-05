@@ -3,9 +3,8 @@ package route
 import "context"
 
 type IAction interface {
-	Init()
-	Ctx(ctx ...context.Context) context.Context
+	Init(context.Context)
+	Ctx() context.Context
 	Prepare() error
-	Run() (error, map[string]interface{})
-	End()
+	Run() (err error, content interface{})
 }

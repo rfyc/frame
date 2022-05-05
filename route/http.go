@@ -85,6 +85,6 @@ func (this *DefaultHTTP) In() *Input {
 }
 
 func (this *DefaultHTTP) Out(out *Output) {
-	this.response.Header()
+	this.response.WriteHeader(out.Code)
 	this.response.Write(out.Content)
 }

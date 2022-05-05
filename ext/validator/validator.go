@@ -36,7 +36,6 @@ func Validate(rules IRules) (bool, error) {
 
 func errorf(rule_error error, errmsg string, args ...interface{}) error {
 	if rule_error == nil {
-		fmt.Println(errmsg, args)
 		return fmt.Errorf(errmsg, args...)
 	} else {
 		return fmt.Errorf("%w: "+errmsg, append([]interface{}{rule_error}, args...))

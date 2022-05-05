@@ -4,19 +4,19 @@ import (
 	"strings"
 )
 
-type URIHandler interface {
+type RegistHandler interface {
 	Parse(path string) (IController, IAction)
-	Default(IController)
-	RegisterController(name string, exec IController)
-	RegisterAction(controller, action string, exec IAction)
+	Controller(exec IController, name ...string)
+	Action(exec IAction, controller, action string)
 }
 
-type DefaultURI struct {
-	actions     map[string]IAction
-	controllers map[string]IController
+type DefaultRegister struct {
+	actions           map[string]IAction
+	controllers       map[string]IController
+	defaultController IController
 }
 
-func (this *DefaultURI) Parse(path string) (execController IController, execAction IAction) {
+func (this *DefaultRegister) Parse(path string) (execController IController, execAction IAction) {
 
 	var (
 		action     = ""
@@ -42,14 +42,20 @@ func (this *DefaultURI) Parse(path string) (execController IController, execActi
 	return
 }
 
-func (this *DefaultURI) RegisterController(name string, controller IController) {
+func (this *DefaultRegister) Controller(controller IController, names ...string) {
 	if len(this.controllers) == 0 {
 		this.controllers = map[string]IController{}
 	}
-	this.controllers[name] = controller
+	if len(names) > 0 {
+		for _, name := range names {
+			this.controllers[name] = controller
+		}
+	} else {
+		this.defaultController = controller
+	}
 }
 
-func (this *DefaultURI) RegisterAction(controller_name, action_name string, action IAction) {
+func (this *DefaultRegister) Action(action IAction, controller_name, action_name string) {
 	if len(this.actions) == 0 {
 		this.actions = map[string]IAction{}
 	}

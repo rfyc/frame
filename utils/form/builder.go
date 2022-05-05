@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/rfyc/frame/frame/ext/validator"
-	"github.com/rfyc/frame/frame/func/object"
 	"github.com/rfyc/frame/frame/web/form/element"
+	"github.com/rfyc/frame/utils/object"
 )
 
 func BuildForm(action, method string, formModel interface{}, elements []element.Interface) *Builder {

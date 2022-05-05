@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"errors"
 	"github.com/rfyc/frame/ext/validator"
 	"github.com/rfyc/frame/utils/conv"
 	"github.com/rfyc/frame/utils/structs"
@@ -12,9 +13,8 @@ import (
 )
 
 type Config struct {
-	Config   string
-	LoadFile func(config string) ([]byte, error)
-	content  []byte
+	Config  string
+	content []byte
 }
 
 func (this *Config) Rules() validator.IRules {
@@ -33,7 +33,7 @@ func (this *Config) Rules() validator.IRules {
 func (this *Config) Load() (err error) {
 
 	if this.Config != "" {
-		if this.content, err = this.LoadFile(this.Config); err != nil {
+		if this.content, err = LoadFile(this.Config); err != nil {
 			return err
 		}
 	}
@@ -63,16 +63,16 @@ func LoadFile(config string) ([]byte, error) {
 		bmaps    = make(map[string]interface{})
 	)
 	if strings.Index(config, ".json") <= 0 {
-		return bcontent, err
+		return bcontent, errors.New("file not json")
 	}
 	if bcontent, err = ioutil.ReadFile(config); err != nil {
-		return bcontent, err
+		return bcontent, errors.New("config read error: " + err.Error())
 	}
 	if err = structs.Set(&bmaps, bcontent); err != nil {
-		return bcontent, err
+		return bcontent, errors.New("config set error: " + err.Error())
 	}
 	if dirpath, err = filepath.Abs(filepath.Dir(config)); err != nil {
-		return bcontent, err
+		return bcontent, errors.New("filepath error: " + err.Error())
 	}
 	for key := range bmaps {
 		var file = dirpath + "/" + conv.String(bmaps[key])

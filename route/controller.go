@@ -3,10 +3,8 @@ package route
 import "context"
 
 type IController interface {
-	Init()
-	Ctx(ctx ...context.Context) context.Context
+	Init(context.Context, *Input, IAction)
+	Ctx() context.Context
 	Prepare() error
-	Run(IAction)
-	In() *Input
-	Out() *Output
+	Out(err error, content interface{}) *Output
 }

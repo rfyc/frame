@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/rfyc/frame/frame/func/conv"
+	"github.com/rfyc/frame/utils/conv"
 )
 
 func Text(input_name string, input_desc string, input_tip string) Interface {

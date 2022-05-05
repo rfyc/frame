@@ -12,6 +12,7 @@ import (
 )
 
 type iApp interface {
+	Init()
 	Prepare() error
 	Start() error
 	Stop() error
@@ -80,13 +81,19 @@ func (this *Command) Run(servApp iApp) {
 
 }
 
+func (this *Command) registerApp(servApp iApp) {
+
+	servApp.Init()
+	this.RegisterCmd("start", servApp.Start)
+	this.RegisterCmd("stop", servApp.Stop)
+	this.RegisterCmd("restart", servApp.Restart)
+}
+
 func (this *Command) run(servApp iApp) {
 
 	//service cmds
 	if servApp != nil {
-		this.RegisterCmd("start", servApp.Start)
-		this.RegisterCmd("stop", servApp.Stop)
-		this.RegisterCmd("restart", servApp.Restart)
+		this.registerApp(servApp)
 	}
 	//init args
 	for name, Args := range this.args.maps {
@@ -107,6 +114,12 @@ func (this *Command) run(servApp iApp) {
 		}
 		//args output
 		this.stdio.format("args").format(name, Args.String()).echo()
+	}
+
+	//app prepare
+	if err := servApp.Prepare(); err != nil {
+		this.stdio.format("error").format("app").format("prepare", err.Error()).echo()
+		return
 	}
 	//parse cmd
 	if name, cmd := this.cmd.parse(); cmd != nil {

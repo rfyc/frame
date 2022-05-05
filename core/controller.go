@@ -8,32 +8,18 @@ import (
 
 type Controller struct {
 	ctx    context.Context
+	action route.IAction
 	input  *route.Input
-	output *route.Output
 }
 
-func (this *Controller) Ctx(ctx ...context.Context) context.Context {
-	if len(ctx) > 0 {
-		this.ctx = ctx[0]
-	}
+func (this *Controller) Ctx() context.Context {
 	return this.ctx
 }
 
-func (this *Controller) Init() {
-	this.ctx = context.Background()
-	this.input = &route.Input{}
-	this.output = &route.Output{}
-}
-
-func (this *Controller) Prepare(action route.IAction) error {
-	if err := structs.Set(action, this.In().Request); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (this *Controller) Run(action route.IAction) {
-
+func (this *Controller) Init(ctx context.Context, in *route.Input, action route.IAction) {
+	this.ctx = ctx
+	this.input = in
+	this.action = action
 }
 
 func (this *Controller) In() *route.Input {
@@ -41,6 +27,23 @@ func (this *Controller) In() *route.Input {
 	return this.input
 }
 
-func (this *Controller) Out() *route.Output {
-	return this.output
+func (this *Controller) Action() route.IAction {
+	return this.action
+}
+
+func (this *Controller) Prepare() error {
+
+	if err := structs.Set(this.action, this.In().Request); err != nil {
+		return err
+	}
+
+	if err := this.action.Prepare(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (this *Controller) Out(err error, content interface{}) *route.Output {
+	return &route.Output{}
 }

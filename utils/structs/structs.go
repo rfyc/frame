@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"git.joyme.sg/liveme/myth/group/libs/conv"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/json-iterator/go/extra"
 	"reflect"
 	"strings"
 )
@@ -176,4 +177,8 @@ func values(valueOf reflect.Value) map[string]interface{} {
 func New(obj interface{}) interface{} {
 	typeOf := reflect.Indirect(reflect.ValueOf(obj)).Type()
 	return reflect.New(typeOf).Interface()
+}
+
+func init() {
+	extra.RegisterFuzzyDecoders()
 }
